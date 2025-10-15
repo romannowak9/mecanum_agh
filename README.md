@@ -54,3 +54,9 @@ Należy pamiętać, aby po zbudowaniu wywołać komendę lub pracować w nowym t
 * [ROS 2 Command Cheat Sheet](docs/cheatsheet.md)
 * [ROS 2 Example packages in Python](docs/example.md)
 * [Bridge communication between ROS and Gazebo](docs/ros_gz_bridge.md)
+
+## Dodatkowe informacje
+Dodaj do pliku `~/.bashrc`
+```
+export GZ_SIM_RESOURCE_PATH=$GZ_SIM_RESOURCE_PATH:~/ros2_ws/src/simple_example/resource/
+```
