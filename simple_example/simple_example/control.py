@@ -14,24 +14,30 @@ class VelocityPublisher(Node):
         self.i = 0
 
     def timer_callback(self):
-        msg = St()
-        msg.data = 'Hello World: %d' % self.i
+        msg = Twist()
+
+        msg.linear.x = 1.0
+        msg.linear.y = 0.0
+        msg.linear.z = 0.0
+        msg.angular.x = 0.0
+        msg.angular.y = 0.0
+        msg.angular.z = 0.0
+
         self.publisher_.publish(msg)
-        self.get_logger().info('Publishing: "%s"' % msg.data)
         self.i += 1
 
 
 def main(args=None):
     rclpy.init(args=args)
 
-    minimal_publisher = MinimalPublisher()
+    vel_publisher = VelocityPublisher()
 
-    rclpy.spin(minimal_publisher)
+    rclpy.spin(vel_publisher)
 
     # Destroy the node explicitly
     # (optional - otherwise it will be done automatically
     # when the garbage collector destroys the node object)
-    minimal_publisher.destroy_node()
+    vel_publisher.destroy_node()
     rclpy.shutdown()
 
 

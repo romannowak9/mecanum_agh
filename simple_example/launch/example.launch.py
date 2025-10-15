@@ -41,6 +41,13 @@ def generate_launch_description():
         output='screen'
     )
 
+    control_node = Node(
+        package='simple_example',
+        namespace='simple_example',
+        executable='control',
+        name='control'
+    )
+
     return LaunchDescription([
         DeclareLaunchArgument('rviz', default_value='true',
                               description='Open RViz.'),
