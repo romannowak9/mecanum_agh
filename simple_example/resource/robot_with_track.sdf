@@ -75,7 +75,7 @@
         </light>
         <include>
             <uri>model://Trapezoid_model.sdf</uri>
-            <pose>0 0 0 0 0 0</pose>
+            <pose>-25 -25 0 0 0 0</pose>
             <name>racetrack</name>
         </include>
 
@@ -120,7 +120,7 @@
         </model>
 
         <model name='vehicle_blue' canonical_link='chassis'>
-            <pose relative_to='world'>0 0 0 0 0 0</pose>   <!--the pose is relative to the world by default-->
+            <pose relative_to='world'>-22.5 5.50 0 0 0 -1.55</pose>   <!--the pose is relative to the world by default-->
 
             <link name='chassis'>
                 <pose relative_to='__model__'>0.5 0 0.4 0 0 0</pose>

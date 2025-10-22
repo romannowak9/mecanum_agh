@@ -6,7 +6,7 @@
 <pose>0 0 0 0 0 0</pose>
 <geometry>
 <mesh>
-<uri>model://../resource/meshes/Trapezoid/Trapezoid_collision.dae</uri>
+<uri>model://meshes/Trapezoid/Trapezoid_collision.dae</uri>
 </mesh>
 </geometry>
 </collision>
@@ -14,7 +14,7 @@
 <pose>0 0 0 0 0 0</pose>
 <geometry>
 <mesh>
-<uri>model://../resource/meshes/Trapezoid/Trapezoid.dae</uri>
+<uri>model://meshes/Trapezoid/model.dae</uri>
 </mesh>
 </geometry>
 </visual>
