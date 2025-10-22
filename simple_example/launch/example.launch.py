@@ -20,7 +20,7 @@ def generate_launch_description():
     gz_sim = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
             os.path.join(pkg_ros_gz_sim, 'launch', 'gz_sim.launch.py')),
-        launch_arguments={'gz_args': '-r robot_with_track.sdf'}.items(),
+        launch_arguments={'gz_args': '-r mecanum_drive.sdf'}.items(),
     )
 
     # RViz
@@ -37,7 +37,7 @@ def generate_launch_description():
         executable='parameter_bridge',
         arguments=['/camera@sensor_msgs/msg/Image@gz.msgs.Image',
                    '/camera_info@sensor_msgs/msg/CameraInfo@gz.msgs.CameraInfo',
-                   '/cmd_vel@geometry_msgs/msg/Twist@gz.msgs.Twist'],
+                   '/model/vehicle_blue/cmd_vel@geometry_msgs/msg/Twist@gz.msgs.Twist'],
         output='screen'
     )
 
@@ -54,5 +54,5 @@ def generate_launch_description():
         gz_sim,
         bridge,
         rviz,
-        control_node
+        # control_node
     ])

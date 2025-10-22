@@ -8,7 +8,7 @@ class VelocityPublisher(Node):
 
     def __init__(self):
         super().__init__('velocity_publisher')
-        self.publisher_ = self.create_publisher(Twist, '/cmd_vel', 10)
+        self.publisher_ = self.create_publisher(Twist, '/model/vehicle_blue/cmd_vel', 10)
         timer_period = 0.5  # seconds
         self.timer = self.create_timer(timer_period, self.timer_callback)
         self.i = 0
@@ -16,7 +16,7 @@ class VelocityPublisher(Node):
     def timer_callback(self):
         msg = Twist()
 
-        msg.linear.x = 1.0
+        msg.linear.x = 0.0
         msg.linear.y = 0.0
         msg.linear.z = 0.0
         msg.angular.x = 0.0
