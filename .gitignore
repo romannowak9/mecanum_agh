@@ -3,3 +3,4 @@
 **/install/
 **/.vscode
 core*.*
+**/__pycache__/**
