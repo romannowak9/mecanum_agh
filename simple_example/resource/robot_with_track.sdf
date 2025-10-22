@@ -95,6 +95,7 @@
         <scene>
             <ambient>0.6 0.6 0.6 1.0</ambient>
             <shadows>1</shadows>
+            <grid>false</grid>
             <sky />
         </scene>
         <!-- <include>
