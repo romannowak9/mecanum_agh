@@ -37,15 +37,8 @@ def generate_launch_description():
         executable='parameter_bridge',
         arguments=['/camera@sensor_msgs/msg/Image@gz.msgs.Image',
                    '/camera_info@sensor_msgs/msg/CameraInfo@gz.msgs.CameraInfo',
-                   '/cmd_vel@geometry_msgs/msg/Twist@gz.msgs.Twist'],
+                   '/model/vehicle_blue/cmd_vel@geometry_msgs/msg/Twist@gz.msgs.Twist'],
         output='screen'
-    )
-
-    control_node = Node(
-        package='simple_example',
-        namespace='simple_example',
-        executable='control',
-        name='control'
     )
 
     return LaunchDescription([
@@ -54,5 +47,4 @@ def generate_launch_description():
         gz_sim,
         bridge,
         rviz,
-        control_node
     ])
