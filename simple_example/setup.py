@@ -25,7 +25,7 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'ros_gazebo_ex = simple_example.simple_example_node:main'
+            'control = simple_example.control:main'
         ],
     },
 )
