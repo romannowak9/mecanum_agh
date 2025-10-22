@@ -84,6 +84,7 @@
                 </ignition-gui>
             </plugin>
             <plugin filename="Teleop" name="Teleop">
+                <topic>/model/vehicle_blue/cmd_vel</topic>
                 <gz-gui>
                     <title>Teleop</title>
                     <property key="state" type="string">docked</property>
