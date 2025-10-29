@@ -31,6 +31,13 @@ def generate_launch_description():
         condition=IfCondition(LaunchConfiguration('rviz'))
     )
 
+    camera = Node(
+        package='simple_example',
+        namespace='simple_example',
+        executable='camera',
+        name='camera'
+    )
+
     # Bridge
     bridge = Node(
         package='ros_gz_bridge',
@@ -47,4 +54,5 @@ def generate_launch_description():
         gz_sim,
         bridge,
         rviz,
+        camera
     ])
