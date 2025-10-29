@@ -4,13 +4,14 @@ import numpy as np
 import cv2
 
 from sensor_msgs.msg import Image
+from geometry_msgs.msg import Point
 from rclpy.qos import QoSProfile, QoSReliabilityPolicy, QoSHistoryPolicy
 
 
 class CameraSubscriber(Node):
 
     def __init__(self):
-        super().__init__('camera_publisher')
+        super().__init__('camera_node')
         
         print("Strting camera node...")
 
@@ -21,6 +22,9 @@ class CameraSubscriber(Node):
         )
 
         self.img_sub_ = self.create_subscription(Image, "/camera", self.camera_cb, qos_profile=qos_profile)
+
+        self.set_point_pub_ = self.create_publisher(Point, "/img_set_point", qos_profile=qos_profile)
+
         self.__curr_frame = None
     
     def camera_cb(self, msg: Image):
@@ -54,6 +58,13 @@ class CameraSubscriber(Node):
                 cy = int(M['m01'] / M['m00'])
 
                 cv2.circle(self.__curr_frame, (cx, cy), 6, (0, 255, 0), -1)  # Okrąg w kolorze czerwonym
+                
+                set_point_msg = Point()
+                set_point_msg.x = float(cx)
+                set_point_msg.y = float(cy)
+                set_point_msg.z = 0.0
+
+                self.set_point_pub_.publish(set_point_msg)
 
         cv2.imshow('camera', self.__curr_frame)
         cv2.waitKey(1)
