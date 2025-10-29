@@ -31,6 +31,12 @@ class CameraSubscriber(Node):
 
         # Tu trzeba usunąć to wyświetlanie i robić coś z tym obrazem
         cv2.imshow('camera', self.__curr_frame)
+
+        lower = [0, 110,  180]
+        upper = [5, 128, 210]
+        mask = cv2.inRange(self.__curr_frame, np.array(lower, dtype="uint8"), np.array(upper, dtype="uint8"))
+        output = cv2.bitwise_and(self.__curr_frame, self.__curr_frame, mask=mask)
+        cv2.imshow('mask', output)
         cv2.waitKey(1)
 
 
