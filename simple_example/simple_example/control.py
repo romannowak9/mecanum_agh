@@ -1,100 +1,73 @@
 import rclpy
 from rclpy.node import Node
 from geometry_msgs.msg import Twist
-import termios
-import tty
+import pygame
 import sys
-import select
 
-
-class KeyboardCarController(Node):
+class GamepadCarController(Node):
 
     def __init__(self):
-        super().__init__('keyboard_car_controller')
+        super().__init__('gamepad_car_controller')
         self.publisher_ = self.create_publisher(Twist, '/model/vehicle_blue/cmd_vel', 10)
         
         # Control parameters
         self.linear_speed = 1.0
         self.angular_speed = 1.0
         self.current_twist = Twist()
+
+        # Initialize pygame and the joystick
+        pygame.init()
+        self.joystick_count = pygame.joystick.get_count()
         
+        if self.joystick_count == 0:
+            print("No gamepad connected. Exiting...")
+            sys.exit()
+        
+        # Assuming the first joystick is the one to be used
+        self.joystick = pygame.joystick.Joystick(0)
+        self.joystick.init()
+
         # Instructions
         self.print_instructions()
-        
-        # Set up terminal for keyboard input
-        self.old_settings = termios.tcgetattr(sys.stdin)
-        
+
     def print_instructions(self):
-        print("\n=== Car Keyboard Controller ===")
+        print("\n=== Car Gamepad Controller ===")
         print("Controls:")
-        print("  W - Move forward")
-        print("  S - Move backward")
-        print("  A - Turn left")
-        print("  D - Turn right")
-        print("  Q - Stop and quit")
-        print("  X - Emergency stop")
+        print("  Left Joystick - Move (Up/Down for forward/backward, Left/Right for turning)")
+        print("  Right Trigger - Move forward")
+        print("  Left Trigger - Move backward")
+        print("  Buttons (O, X) for emergency stop and quit")
         print("==============================\n")
 
-    def get_key(self):
-        """Get a single key press without requiring Enter"""
-        try:
-            tty.setraw(sys.stdin.fileno())
-            if select.select([sys.stdin], [], [], 0.1)[0]:
-                key = sys.stdin.read(1)
-                return key
-            return None
-        finally:
-            termios.tcsetattr(sys.stdin, termios.TCSADRAIN, self.old_settings)
-
-    def process_keyboard_input(self):
-        """Process keyboard input and update velocity commands"""
-        key = self.get_key()
+    def process_gamepad_input(self):
+        """Process gamepad input and update velocity commands"""
+        pygame.event.pump()  # Process any events
         
-        if key is None:
-            return True  # Continue running
+        # Get joystick axis values (range is typically -1 to 1)
+        forward_backward = self.joystick.get_axis(1)  # Axis 1 controls forward/backward
+        left_right = self.joystick.get_axis(0)  # Axis 0 controls left/right turn
         
-        key = key.lower()
+        # Adjust the values from the joystick input range to control speeds
+        if abs(forward_backward) > 0.1:
+            self.current_twist.linear.x = self.linear_speed * -forward_backward  # Invert to match expected direction
+        else:
+            self.current_twist.linear.x = 0
         
-        # Reset twist
-        self.current_twist = Twist()
+        if abs(left_right) > 0.1:
+            self.current_twist.angular.z = self.angular_speed * left_right
         
-        if key == 'w':
-            # Move forward
-            self.current_twist.linear.x = self.linear_speed
-            print("Moving forward")
-            
-        elif key == 's':
-            # Move backward
-            self.current_twist.linear.x = -self.linear_speed
-            print("Moving backward")
-            
-        elif key == 'a':
-            # Turn left (while moving forward)
-            self.current_twist.linear.x = self.linear_speed * 0.5
-            self.current_twist.angular.z = self.angular_speed
-            print("Turning left")
-            
-        elif key == 'd':
-            # Turn right (while moving forward)
-            self.current_twist.linear.x = self.linear_speed * 0.5
-            self.current_twist.angular.z = -self.angular_speed
-            print("Turning right")
-            
-        elif key == 'x':
-            # Emergency stop
+        # Check if trigger buttons are pressed (for emergency stop and quit)
+        button_stop = self.joystick.get_button(0)  # Assuming Button 0 is emergency stop
+        button_quit = self.joystick.get_button(1)  # Assuming Button 1 is quit
+        
+        if button_stop:
             self.current_twist = Twist()
             print("EMERGENCY STOP!")
-            
-        elif key == 'q':
-            # Quit
+        
+        if button_quit:
             self.current_twist = Twist()
             print("Stopping and quitting...")
             return False
-            
-        else:
-            # Stop if any other key is pressed
-            self.current_twist = Twist()
-            print("Stopped")
         
         # Publish the velocity command
         self.publisher_.publish(self.current_twist)
@@ -107,25 +80,24 @@ class KeyboardCarController(Node):
         print("Vehicle stopped")
 
     def cleanup(self):
-        """Restore terminal settings"""
-        termios.tcsetattr(sys.stdin, termios.TCSADRAIN, self.old_settings)
-
+        """Cleanup pygame"""
+        pygame.quit()
 
 def main(args=None):
     rclpy.init(args=args)
 
-    controller = KeyboardCarController()
+    controller = GamepadCarController()
 
     try:
-        print("Controller started. Press keys to control the vehicle...")
+        print("Controller started. Use the gamepad to control the vehicle...")
         
         # Main loop
         while rclpy.ok():
             # Spin once to handle any callbacks
             rclpy.spin_once(controller, timeout_sec=0.01)
             
-            # Process keyboard input
-            if not controller.process_keyboard_input():
+            # Process gamepad input
+            if not controller.process_gamepad_input():
                 break
                 
     except KeyboardInterrupt:
@@ -139,7 +111,6 @@ def main(args=None):
         controller.destroy_node()
         rclpy.shutdown()
         print("Controller shutdown complete")
-
 
 if __name__ == '__main__':
     main()
