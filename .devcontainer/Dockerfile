@@ -40,7 +40,8 @@ RUN pip3 install \
     jsonschema \
     jinja2 \
     pyros-genmsg \
-    future 
+    future \
+    pygame
 
 
 # Install Gazebo Harmonic - Default Gazebo version in ROS2 Humble is Fortress

@@ -15,6 +15,10 @@ services:
       - /tmp/.X11-unix:/tmp/.X11-unix
     devices:
       - /dev:/dev
+      - /dev/input/js0:/dev/input/js0  # Xbox controller device
+    group_add:
+      - 107   # Add 'developer' user to input group (replace 107 with your host input GID)
+    user: developer
     environment:
       - DISPLAY
       - "QT_X11_NO_MITSHM=1"

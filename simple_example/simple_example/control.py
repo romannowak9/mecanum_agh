@@ -26,7 +26,7 @@ class GamepadCarController(Node):
         # Assuming the first joystick is the one to be used
         self.joystick = pygame.joystick.Joystick(0)
         self.joystick.init()
-
+        
         # Instructions
         self.print_instructions()
 
