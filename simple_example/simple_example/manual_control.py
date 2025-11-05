@@ -10,12 +10,11 @@ class GamepadCarController(Node):
         super().__init__('gamepad_car_controller')
         self.publisher_ = self.create_publisher(Twist, '/model/vehicle_blue/cmd_vel', 10)
         
-        # Control parameters
-        self.linear_speed = 1.0
-        self.angular_speed = 1.0
+        self.linear_speed = 6.0
+        self.angular_speed = 3.0
+    
         self.current_twist = Twist()
 
-        # Initialize pygame and the joystick
         pygame.init()
         self.joystick_count = pygame.joystick.get_count()
         
@@ -23,7 +22,6 @@ class GamepadCarController(Node):
             print("No gamepad connected. Exiting...")
             sys.exit()
         
-        # Assuming the first joystick is the one to be used
         self.joystick = pygame.joystick.Joystick(0)
         self.joystick.init()
         
@@ -34,42 +32,31 @@ class GamepadCarController(Node):
         print("\n=== Car Gamepad Controller ===")
         print("Controls:")
         print("  Left Joystick - Move (Up/Down for forward/backward, Left/Right for turning)")
-        print("  Right Trigger - Move forward")
-        print("  Left Trigger - Move backward")
-        print("  Buttons (O, X) for emergency stop and quit")
+        print("  Button X - Stop")
         print("==============================\n")
 
     def process_gamepad_input(self):
         """Process gamepad input and update velocity commands"""
-        pygame.event.pump()  # Process any events
+        pygame.event.pump()
         
-        # Get joystick axis values (range is typically -1 to 1)
-        forward_backward = self.joystick.get_axis(1)  # Axis 1 controls forward/backward
-        left_right = self.joystick.get_axis(0)  # Axis 0 controls left/right turn
+        forward_backward = self.joystick.get_axis(1)
+        left_right = self.joystick.get_axis(0)
         
-        # Adjust the values from the joystick input range to control speeds
         if abs(forward_backward) > 0.1:
-            self.current_twist.linear.x = self.linear_speed * -forward_backward  # Invert to match expected direction
+            self.current_twist.linear.x = self.linear_speed * -forward_backward
         else:
-            self.current_twist.linear.x = 0
+            self.current_twist.linear.x = 0.0
         
         if abs(left_right) > 0.1:
-            self.current_twist.angular.z = self.angular_speed * left_right
+            self.current_twist.angular.z = self.angular_speed * (-left_right)
         
-        # Check if trigger buttons are pressed (for emergency stop and quit)
-        button_stop = self.joystick.get_button(0)  # Assuming Button 0 is emergency stop
-        button_quit = self.joystick.get_button(1)  # Assuming Button 1 is quit
+        stop_button = self.joystick.get_button(0)
+
+        if stop_button:
+            self.current_twist.linear.x = 0.0
+            self.current_twist.angular.z = 0.0
         
-        if button_stop:
-            self.current_twist = Twist()
-            print("EMERGENCY STOP!")
         
-        if button_quit:
-            self.current_twist = Twist()
-            print("Stopping and quitting...")
-            return False
-        
-        # Publish the velocity command
         self.publisher_.publish(self.current_twist)
         return True
 
@@ -91,12 +78,9 @@ def main(args=None):
     try:
         print("Controller started. Use the gamepad to control the vehicle...")
         
-        # Main loop
         while rclpy.ok():
-            # Spin once to handle any callbacks
             rclpy.spin_once(controller, timeout_sec=0.01)
             
-            # Process gamepad input
             if not controller.process_gamepad_input():
                 break
                 
@@ -104,8 +88,6 @@ def main(args=None):
         print("\nInterrupted by user")
     except Exception as e:
         print(f"An error occurred: {e}")
-    finally:
-        # Cleanup
         controller.stop()
         controller.cleanup()
         controller.destroy_node()
