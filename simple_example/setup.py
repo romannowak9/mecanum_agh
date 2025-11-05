@@ -25,7 +25,7 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            # 'control = simple_example.control:main',
+            'control = simple_example.control:main',
             'camera = simple_example.camera:main'
         ],
     },

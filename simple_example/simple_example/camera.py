@@ -60,8 +60,8 @@ class CameraSubscriber(Node):
                 cv2.circle(self.__curr_frame, (cx, cy), 6, (0, 255, 0), -1)  # Okrąg w kolorze czerwonym
                 
                 set_point_msg = Point()
-                set_point_msg.x = float(cx)
-                set_point_msg.y = float(cy)
+                set_point_msg.x = float(cx) - current_frame_rgb.shape[1] // 2
+                set_point_msg.y = current_frame_rgb.shape[0] - float(cy) 
                 set_point_msg.z = 0.0
 
                 self.set_point_pub_.publish(set_point_msg)
