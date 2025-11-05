@@ -39,6 +39,13 @@ def generate_launch_description():
         name='camera'
     )
 
+    control = Node(
+        package='simple_example',
+        namespace='simple_example',
+        executable='control',
+        name='control'
+    )
+
     # Bridge
     bridge = Node(
         package='ros_gz_bridge',
@@ -55,5 +62,6 @@ def generate_launch_description():
         gz_sim,
         bridge,
         rviz,
-        camera
+        camera,
+        control
     ])
