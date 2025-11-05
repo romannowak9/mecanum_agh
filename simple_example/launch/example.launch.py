@@ -16,6 +16,7 @@ def generate_launch_description():
 
     pkg_ros_gz_sim_demos = get_package_share_directory('ros_gz_sim_demos')
     pkg_ros_gz_sim = get_package_share_directory('ros_gz_sim')
+    rviz_file = '/home/developer/ros2_ws/src/simple_example/xd.rviz'
 
     gz_sim = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
@@ -27,8 +28,15 @@ def generate_launch_description():
     rviz = Node(
         package='rviz2',
         executable='rviz2',
-        arguments=['-d', os.path.join(pkg_ros_gz_sim_demos, 'rviz', 'camera.rviz')],
+        arguments=['-d', rviz_file],
         condition=IfCondition(LaunchConfiguration('rviz'))
+    )
+
+    camera = Node(
+        package='simple_example',
+        namespace='simple_example',
+        executable='camera',
+        name='camera'
     )
 
     # Bridge
@@ -47,4 +55,5 @@ def generate_launch_description():
         gz_sim,
         bridge,
         rviz,
+        camera
     ])
