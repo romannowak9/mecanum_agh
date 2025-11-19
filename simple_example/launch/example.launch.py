@@ -39,13 +39,21 @@ def generate_launch_description():
         name='camera'
     )
 
+    control = Node(
+        package='simple_example',
+        namespace='simple_example',
+        executable='control',
+        name='control'
+    )
+
     # Bridge
     bridge = Node(
         package='ros_gz_bridge',
         executable='parameter_bridge',
         arguments=['/camera@sensor_msgs/msg/Image@gz.msgs.Image',
                    '/camera_info@sensor_msgs/msg/CameraInfo@gz.msgs.CameraInfo',
-                   '/model/vehicle_blue/cmd_vel@geometry_msgs/msg/Twist@gz.msgs.Twist'],
+                   '/model/vehicle_blue/cmd_vel@geometry_msgs/msg/Twist@gz.msgs.Twist',
+                   '/imu@sensor_msgs/msg/Imu@gz.msgs.IMU',],
         output='screen'
     )
 
@@ -55,5 +63,6 @@ def generate_launch_description():
         gz_sim,
         bridge,
         rviz,
-        camera
+        camera,
+        control
     ])
