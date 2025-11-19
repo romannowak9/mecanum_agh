@@ -17,6 +17,8 @@ STRIPE_WIDTH = 0.3  # m
 IMG_W = 320
 IMG_H = 240
 
+MIN_STRIPE_AREA = 30
+
 
 class CameraSubscriber(Node):
 
@@ -47,125 +49,108 @@ class CameraSubscriber(Node):
         input_data = np.frombuffer(msg.data, dtype=np.uint8)
         current_frame_rgb = input_data.reshape([msg.height, msg.width, 3])
         self.__curr_frame = cv2.cvtColor(current_frame_rgb, cv2.COLOR_RGB2BGR)
-        # self.__curr_frame = cv2.cvtColor(current_frame_rgb, cv2.COLOR_RGB2GRAY)
 
         # Yellow stripes color bounds
         # w HSV [10, 150, 100] i [30, 255, 255]
-        lower = [0, 110,  180]
-        upper = [5, 128, 210]
-        mask = cv2.inRange(self.__curr_frame, np.array(lower, dtype="uint8"), np.array(upper, dtype="uint8"))
+        # lower = [0, 110,  180] # BGR
+        # upper = [5, 128, 210] # BGR
+        color = [0, 118, 197]
+        color_hsv = cv2.cvtColor(np.array([[color]], dtype="uint8"), cv2.COLOR_BGR2HSV)[0][0]
+        h_tol = 5
+        s_tol = 10
+        v_tol = 60
+        hsv_lower = [np.clip(color_hsv[0] - h_tol, 0, 255),
+                     np.clip(color_hsv[1] - s_tol, 0, 255),
+                     np.clip(color_hsv[2] - v_tol, 0, 255)]
+        hsv_upper = [np.clip(color_hsv[0] + h_tol, 0, 255),
+                     np.clip(color_hsv[1] + s_tol, 0, 255),
+                     np.clip(color_hsv[2] + v_tol, 0, 255)]
+        
+        mask = cv2.inRange(cv2.cvtColor(self.__curr_frame, cv2.COLOR_BGR2HSV),
+                           np.array(hsv_lower, dtype="uint8"),
+                           np.array(hsv_upper, dtype="uint8"))
         output = cv2.bitwise_and(self.__curr_frame, self.__curr_frame, mask=mask)
+
+        kernel = np.ones((3,3),np.uint8)
+        output = cv2.morphologyEx(output, cv2.MORPH_CLOSE, kernel)
         cv2.imshow('mask', output)
 
         contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
         largest_contour = None
-        max_area = 0
 
-        for contour in contours:
-            area = cv2.contourArea(contour)
+        for contour in contours[1:]:
             # Czy kontur jest najwiekszy i czy nie dotyka krawędzi pobrazu
-            if area > max_area and contour[:, 0, 1].max() < IMG_H - 1:
-                # and contour[:, 0, 1].min() > 0 and contour[:, 0, 0].max() < IMG_W - 1 and contour[:, 0, 0].min() > 0:
-                max_area = area
+            if contour[:, 0, 1].max() < IMG_H - 1 and \
+               contour[:, 0, 1].min() > 0 and \
+               contour[:, 0, 0].max() < IMG_W - 1 and \
+               contour[:, 0, 0].min() > 0:
                 largest_contour = contour
+                break
 
-        if largest_contour is not None:
-            M = cv2.moments(largest_contour)
-            if M['m00'] != 0:
-                # --- Środek największego konturu pasa - zadany punkt ---
-                # cx = int(M['m10'] / M['m00'])
-                # cy = int(M['m01'] / M['m00'])
+        if largest_contour is not None and cv2.contourArea(largest_contour) >= MIN_STRIPE_AREA:
+            # --- Wyznaczanie wymiarów pasa na obrazie w pikselach ---
+            # Aproksymacja do 4 punktów
+            epsilon = 0.02 * cv2.arcLength(largest_contour, True)
+            approx = cv2.approxPolyDP(largest_contour, epsilon, True)
 
-                # set_point_msg = Point()
-                # set_point_msg.x = float(cx)
-                # set_point_msg.y = float(cy)
-                # set_point_msg.z = 0.0
+            if len(approx) != 4:
+                print("WARNING: Największy kontur w zadanych kolorze nie jest czworokątem!")
+                return
+            
+            # Konwersja do prostszej tablicy
+            pts = approx.reshape(4, 2)
 
-                # self.set_point_pub_.publish(set_point_msg)
+            # Sortowanie punktów: najpierw po y (góra/dół), potem po x (lewo/prawo)
+            pts = pts[np.argsort(pts[:, 1])]  # sort po Y
+            top = pts[:2]
+            bottom = pts[2:]
 
-                # --- Wyznaczanie wymiarów pasa na obrazie w pikselach ---
-                # Aproksymacja do 4 punktów
-                epsilon = 0.02 * cv2.arcLength(largest_contour, True)
-                approx = cv2.approxPolyDP(largest_contour, epsilon, True)
+            top = top[np.argsort(top[:, 0])]        # góra: lewo, prawo
+            bottom = bottom[np.argsort(bottom[:, 0])]  # dół: lewo, prawo
 
-                if len(approx) != 4:
-                    print("WARNING: Największy kontur w zadanych kolorze nie jest czworokątem!")
-                    return
-                
-                # Konwersja do prostszej tablicy
-                pts = approx.reshape(4, 2)
+            tl, tr = top
+            bl, br = bottom
 
-                # Sortowanie punktów: najpierw po y (góra/dół), potem po x (lewo/prawo)
-                pts = pts[np.argsort(pts[:, 1])]  # sort po Y
-                top = pts[:2]
-                bottom = pts[2:]
+            # Szerokość w środku pasa
+            mid_left = ((tl + bl) / 2).astype(int)
+            mid_right = ((tr + br) / 2).astype(int)
 
-                top = top[np.argsort(top[:, 0])]        # góra: lewo, prawo
-                bottom = bottom[np.argsort(bottom[:, 0])]  # dół: lewo, prawo
+            mid_width = np.linalg.norm(mid_left - mid_right)
+            set_point_2d = np.mean([mid_left, mid_right], axis=0).astype(int) # set point on img in pixels
 
-                tl, tr = top
-                bl, br = bottom
+            cv2.circle(self.__curr_frame, tuple(set_point_2d), 6, (0, 255, 0), -1)
 
-                # Szerokości (dalsza i bliższa) pasa widocznego na ekranie w piksela
-                # top_width = np.linalg.norm(tl - tr)
-                # bottom_width = np.linalg.norm(bl - br)
+            # Wizualizacja
+            # Szerokość w środku pasa (biała)
+            cv2.line(self.__curr_frame, tuple(mid_left), tuple(mid_right), (255, 255, 255), 2)
 
-                # Szerokość w środku pasa
-                mid_left = ((tl + bl) / 2).astype(int)
-                mid_right = ((tr + br) / 2).astype(int)
+            self.put_text(self.__curr_frame, set_point_2d, f"{mid_width:.1f}px")
 
-                mid_width = np.linalg.norm(mid_left - mid_right)
-                set_point_2d = np.mean([mid_left, mid_right], axis=0).astype(int) # set point on img in pixels
+            # --- Położenie punktu w przstrzeni 3D względem kamery ---
+            f = K[0,0]  # focal length
 
-                cv2.circle(self.__curr_frame, tuple(set_point_2d), 6, (0, 255, 0), -1)
+            # Odległość do pasa (Z w układzie kamery)
+            Z = f * STRIPE_WIDTH / mid_width  # meters
 
-                # Długość pasa widocznego na ekranie w pikselach
-                # mid_top = np.mean([tl, tr], axis=0).astype(int)
-                # mid_bottom = np.mean([bl, br], axis=0).astype(int)
+            # Promień z normalizacją pikseli
+            uv1 = np.array([set_point_2d[0], set_point_2d[1], 1.0], dtype=float)
+            cam_ray = np.linalg.inv(K) @ uv1
 
-                # stripe_len = np.linalg.norm(mid_top - mid_bottom).astype(int)
+            # Skalowanie do Z
+            P_cam = cam_ray * Z
+            X, Y, Z = P_cam
 
-                # Wizualizacja
-                # górna krawędź (zielona)
-                # cv2.line(self.__curr_frame, tuple(tl), tuple(tr), (0, 255, 0), 2)
-                # # dolna krawędź (niebieska)
-                # cv2.line(self.__curr_frame, tuple(bl), tuple(br), (255, 0, 0), 2)
-                # # długość (czerwona)
-                # cv2.line(self.__curr_frame, tuple(mid_top), tuple(mid_bottom), (0, 0, 255), 2)
-                # Szerokość w środku pasa (biała)
-                cv2.line(self.__curr_frame, tuple(mid_left), tuple(mid_right), (255, 255, 255), 2)
+            # print(f"3D pos wrt camera: X={X:.3f} m, Y={Y:.3f} m, Z={Z:.3f} m")
+            cv2.putText(self.__curr_frame, f"Set point position: X:{X:.3f} m, Y:{Y:.3f} m, Z:{Z:.3f} m", (0, IMG_H - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.35, (255, 255, 255), 1, cv2.LINE_AA)
 
-                # self.put_text(self.__curr_frame, mid_top, f"{top_width:.1f}px")
-                # self.put_text(self.__curr_frame, mid_bottom, f"{bottom_width:.1f}px")
-                # self.put_text(self.__curr_frame, np.mean([mid_bottom, mid_top], axis=0).astype(int), f"{stripe_len:.1f}px")
-                self.put_text(self.__curr_frame, set_point_2d, f"{mid_width:.1f}px")
-
-                # --- Położenie punktu w przstrzeni 3D względem kamery ---
-                f = K[0,0]  # focal length
-
-                # Odległość do pasa (Z w układzie kamery)
-                Z = f * STRIPE_WIDTH / mid_width  # meters
-
-                # Promień z normalizacją pikseli
-                uv1 = np.array([set_point_2d[0], set_point_2d[1], 1.0], dtype=float)
-                cam_ray = np.linalg.inv(K) @ uv1
-
-                # Skalowanie do Z
-                P_cam = cam_ray * Z
-                X, Y, Z = P_cam
-
-                # print(f"3D pos wrt camera: X={X:.3f} m, Y={Y:.3f} m, Z={Z:.3f} m")
-                cv2.putText(self.__curr_frame, f"Set point position: X:{X:.3f} m, Y:{Y:.3f} m, Z:{Z:.3f} m", (0, IMG_H - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.35, (255, 255, 255), 1, cv2.LINE_AA)
-
-                # Publikacja 3D punktu
-                set_point_3d = Point()
-                set_point_3d.x = float(X)
-                set_point_3d.y = float(Y) 
-                set_point_3d.z = float(Z)
-                
-                self.set_point_pub_.publish(set_point_3d)
-                
+            # Publikacja 3D punktu
+            set_point_3d = Point()
+            set_point_3d.x = float(X)
+            set_point_3d.y = float(Y)
+            set_point_3d.z = float(Z)
+            self.set_point_pub_.publish(set_point_3d)
+            
 
         cv2.imshow('camera', self.__curr_frame)
         cv2.waitKey(1)
