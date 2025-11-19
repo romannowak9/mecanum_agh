@@ -9,6 +9,6 @@ while true; do sudo -n true; sleep 60; kill -0 "$$" || exit; done 2>/dev/null &
 
 # Execute the commands
 sudo chmod a+rw /dev/input/event*
-sudo chmod a+rw /dev/input/event*
+sudo chmod a+rw /dev/input/js*
 
 echo "Permissions updated successfully."

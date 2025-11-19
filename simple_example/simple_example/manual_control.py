@@ -49,6 +49,8 @@ class GamepadCarController(Node):
         
         if abs(left_right) > 0.1:
             self.current_twist.angular.z = self.angular_speed * (-left_right)
+        else:
+            self.current_twist.angular.z = 0.0
         
         stop_button = self.joystick.get_button(0)
 

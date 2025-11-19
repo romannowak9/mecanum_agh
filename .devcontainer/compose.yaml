@@ -15,9 +15,10 @@ services:
       - /tmp/.X11-unix:/tmp/.X11-unix
     devices:
       - /dev:/dev
-      - /dev/input/js0:/dev/input/js0  # Xbox controller device
+      - /dev/input/js*:/dev/input/js*
+      - /dev/input/event*:/dev/input/event*
     group_add:
-      - 107   # Add 'developer' user to input group (replace 107 with your host input GID)
+      - 107
     user: developer
     environment:
       - DISPLAY

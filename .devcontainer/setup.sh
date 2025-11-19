@@ -2,6 +2,7 @@
 set -e
 
 cd /home/developer/ros2_ws
+source /home/developer/.bashrc
 
 # vcs import --recursive < /home/developer/ros2_ws/src/px4.repos src
 
