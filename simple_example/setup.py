@@ -26,7 +26,8 @@ setup(
     entry_points={
         'console_scripts': [
             'control = simple_example.control:main',
-            'camera = simple_example.camera:main'
+            'camera = simple_example.camera:main',
+            'LaserScanController = simple_example.LaserScanController:main',
         ],
     },
 )

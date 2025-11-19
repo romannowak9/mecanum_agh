@@ -46,6 +46,13 @@ def generate_launch_description():
         name='control'
     )
 
+    LaserScanController = Node(
+        package='simple_example',
+        namespace='simple_example',
+        executable='LaserScanController',
+        name='LaserScanController'
+    )
+
     # Bridge
     bridge = Node(
         package='ros_gz_bridge',
@@ -53,7 +60,8 @@ def generate_launch_description():
         arguments=['/camera@sensor_msgs/msg/Image@gz.msgs.Image',
                    '/camera_info@sensor_msgs/msg/CameraInfo@gz.msgs.CameraInfo',
                    '/model/vehicle_blue/cmd_vel@geometry_msgs/msg/Twist@gz.msgs.Twist',
-                   '/imu@sensor_msgs/msg/Imu@gz.msgs.IMU',],
+                   '/imu@sensor_msgs/msg/Imu@gz.msgs.IMU',
+                   '/lidar/points@sensor_msgs/msg/PointCloud2@gz.msgs.PointCloudPacked',],
         output='screen'
     )
 
@@ -64,5 +72,6 @@ def generate_launch_description():
         bridge,
         rviz,
         camera,
-        control
+        control,
+        # LaserScanController
     ])
