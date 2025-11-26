@@ -1,8 +1,10 @@
+import json
 import rclpy
 from rclpy.node import Node
 import math
 from geometry_msgs.msg import Point, Twist
 from rclpy.qos import QoSProfile, QoSReliabilityPolicy, QoSHistoryPolicy
+from std_msgs.msg import String
 
 def stanley_control(control_angle, track_error, vehicle_velocity, vehicle_gain, margin=0.05):
     crosstrack = math.atan2(vehicle_gain * track_error) / (vehicle_velocity + margin)
@@ -30,9 +32,17 @@ class AutomaticController(Node):
             qos_profile=point_qos_profile
         )
 
+        self.lidar_sub = self.create_subscription(
+            String, 
+            "/model/vehicle_blue/surround_area", 
+            self.lidar_callback, 
+            qos_profile=point_qos_profile
+        )
+
         self.const_velocity = (2.0, 0.0, 0.0)
         self.vehicle_length = 1.0
-        
+        self.surround_area = {'front': False, 'back': False, 'left': False, 'right': False}
+        self.emergency = False
         self.latest_auto_twist = Twist()
 
     def point_callback(self, point: Point):
@@ -55,4 +65,24 @@ class AutomaticController(Node):
         msg.angular.y = 0.0
         msg.angular.z = float(calc_angle)
 
+        if self.surround_area.get('front', False):
+            msg.linear.x = 0.0
+            if self.surround_area.get('left', False) and not self.surround_area.get('right', False):
+                msg.angular.z = -abs(msg.angular.z) if msg.angular.z != 0.0 else -0.5
+            elif self.surround_area.get('right', False) and not self.surround_area.get('left', False):
+                msg.angular.z = abs(msg.angular.z) if msg.angular.z != 0.0 else 0.5
+            else:
+                msg.angular.z = msg.angular.z * 1.0
+        else:
+            if self.surround_area.get('left', False) and not self.surround_area.get('right', False):
+                msg.angular.z = min(msg.angular.z, -0.2)
+            elif self.surround_area.get('right', False) and not self.surround_area.get('left', False):
+                msg.angular.z = max(msg.angular.z, 0.2)
+
+
+        self.emergency = any(self.surround_area.values())
         self.latest_auto_twist = msg
+
+    def lidar_callback(self, msg: String):
+        surround_area = json.loads(msg.data)
+        self.surround_area = surround_area
