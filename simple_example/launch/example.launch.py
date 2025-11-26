@@ -73,5 +73,5 @@ def generate_launch_description():
         rviz,
         camera,
         control,
-        # LaserScanController
+        LaserScanController
     ])

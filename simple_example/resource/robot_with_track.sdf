@@ -23,7 +23,7 @@
             name="gz::sim::systems::Sensors">
             <render_engine>ogre2</render_engine>
         </plugin>
-        
+
         <plugin filename="gz-sim-imu-system"
             name="gz::sim::systems::Imu">
         </plugin>
@@ -161,6 +161,8 @@
             <name>racetrack</name>
         </include>
 
+
+
         <light type="directional" name="sun">
             <cast_shadows>true</cast_shadows>
             <pose>0 0 10 0 0 0</pose>
@@ -223,8 +225,8 @@
                     <topic>imu</topic>
                 </sensor>
 
-                <sensor name='gpu_lidar' type='gpu_lidar'>"
-                    <pose relative_to='lidar_frame'>0 0 0 0 0 0</pose>
+                <sensor name='gpu_lidar' type='gpu_lidar'>" <pose relative_to='lidar_frame'>0 0 0 0
+                    0 0</pose>
                     <topic>lidar</topic>
                     <update_rate>10</update_rate>
                     <ray>
@@ -232,8 +234,8 @@
                             <horizontal>
                                 <samples>640</samples>
                                 <resolution>1</resolution>
-                                <min_angle>-1.396263</min_angle>
-                                <max_angle>1.396263</max_angle>
+                                <min_angle>-3.14</min_angle>
+                                <max_angle>3.14</max_angle>
                             </horizontal>
                             <vertical>
                                 <samples>1</samples>
@@ -248,7 +250,8 @@
                             <resolution>0.01</resolution>
                         </range>
                     </ray>
-                    <always_on>1</always_on>
+                    <always_on>
+                    1</always_on>
                     <visualize>true</visualize>
                 </sensor>
 
@@ -613,5 +616,38 @@
             <static>false</static>
             <self_collide>false</self_collide>
         </model>
+
+        <model name="cube_model">
+    <static>false</static>
+    <link name="link">
+        <visual name="visual">
+            <geometry>
+                <box>
+                    <size>1 1 1</size> <!-- Cube size 1x1x1 -->
+                </box>
+            </geometry>
+            <material>
+                <ambient>0 0 1 1</ambient> <!-- Color of the cube (blue) -->
+                <diffuse>0 0 1 1</diffuse>
+                <specular>0 0 1 1</specular>
+            </material>
+        </visual>
+
+        <collision name="collision">
+            <geometry>
+                <box>
+                    <size>1 1 1</size> <!-- Cube size 1x1x1 -->
+                </box>
+            </geometry>
+        </collision>
+    </link>
+
+    <!-- Position the cube next to vehicle_blue -->
+    <pose relative_to="vehicle_blue">
+        5 1 0 0 0 0  <!-- Position the cube 2 meters to the right of vehicle_blue -->
+    </pose>
+</model>
+
+
     </world>
 </sdf>
