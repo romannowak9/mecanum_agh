@@ -40,7 +40,8 @@ RUN pip3 install \
     jsonschema \
     jinja2 \
     pyros-genmsg \
-    future 
+    future \
+    pygame
 
 
 # Install Gazebo Harmonic - Default Gazebo version in ROS2 Humble is Fortress
@@ -52,6 +53,7 @@ RUN apt install -y ros-humble-turtle-tf2-py ros-humble-tf2-tools
 
 RUN apt-get update -y
 RUN apt-get upgrade -y
+RUN apt-get install -y nano vim
 
 RUN useradd -rm -d /home/developer -s /bin/bash -g root -G sudo -u 1001 developer && \
     echo 'developer:developer' | chpasswd && \
@@ -64,8 +66,8 @@ USER developer
 COPY . /home/developer/ros2_ws
 WORKDIR /home/developer/ros2_ws
 
-
 RUN echo ". /opt/ros/$ROS_DISTRO/setup.bash" >> ~/.bashrc \
-    && echo ". /home/developer/ros2_ws/install/setup.bash" >> ~/.bashrc
+    && echo ". /home/developer/ros2_ws/install/setup.bash" >> ~/.bashrc \
+    && echo "export GZ_SIM_RESOURCE_PATH=$GZ_SIM_RESOURCE_PATH:~/ros2_ws/src/simple_example/resource/" >> ~/.bashrc
 
 CMD [ "sleep", "infinity" ]
