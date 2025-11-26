@@ -56,7 +56,9 @@ Należy pamiętać, aby po zbudowaniu wywołać komendę lub pracować w nowym t
 * [Bridge communication between ROS and Gazebo](docs/ros_gz_bridge.md)
 
 ## Dodatkowe informacje
-Dodaj do pliku `~/.bashrc`
+W celu uruchomienia projektu bez wpisywania wielu komend, należy uruchomić następujące polecenia:
+```bash
+cd .. # Zmiania folderu do ~/ros2_ws
+./launch.sh
 ```
-export GZ_SIM_RESOURCE_PATH=$GZ_SIM_RESOURCE_PATH:~/ros2_ws/src/simple_example/resource/
-```
+W tym momencie skrypt upewnia się, że wszystkie ścieżki znajdują się w PATH, czy projekt jest zbudowany i uruchamia wszystkie widoki.
