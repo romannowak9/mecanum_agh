@@ -13,6 +13,26 @@ def pure_pursuit(vehicle_length, error_angle, forward_velocity, gain=1):
     heading_angle = math.atan((2.0 * vehicle_length * math.sin(error_angle)) / (gain * forward_velocity))
     return heading_angle
 
+
+class PID:
+    def __init__(self, kp, ki, kd):
+        self.kp = kp
+        self.ki = ki
+        self.kd = kd
+        self.prev_error = 0
+        self.prev_prev_error = 0
+
+    def __call__(self, err):
+        p = self.kp * (err - self.prev_error)
+        i = self.ki * (err)
+        d = self.kd * (err - 2 * self.prev_error + self.prev_prev_error)
+
+        self.prev_prev_error = self.prev_error
+        self.prev_error = err
+
+        return p + i + d
+
+
 class AutomaticController(Node):
     def __init__(self):
         super().__init__('automatic_controller')
@@ -35,6 +55,8 @@ class AutomaticController(Node):
         
         self.latest_auto_twist = Twist()
 
+        self.pid = PID(kp=2, ki=0.5, kd=0.02)
+
     def point_callback(self, point: Point):
         msg = Twist()
         msg.linear.x = self.const_velocity[0]
@@ -44,13 +66,19 @@ class AutomaticController(Node):
         dist = point.y
         e = -point.x
 
-        err_angle = math.atan2(e, dist + self.vehicle_length)
+        ## PURE PURSUIT
+        # err_angle = math.atan2(e, dist + self.vehicle_length)
 
-        calc_angle = pure_pursuit(
-            vehicle_length=self.vehicle_length,
-            error_angle=err_angle,
-            forward_velocity=self.const_velocity[0]
-        )
+        # calc_angle = pure_pursuit(
+        #     vehicle_length=self.vehicle_length,
+        #     error_angle=err_angle,
+        #     forward_velocity=self.const_velocity[0]
+        # )
+
+        ## PID
+        calc_angle  = self.pid(e)
+
+
         msg.angular.x = 0.0
         msg.angular.y = 0.0
         msg.angular.z = float(calc_angle)
