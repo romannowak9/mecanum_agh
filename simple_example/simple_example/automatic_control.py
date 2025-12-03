@@ -71,7 +71,7 @@ class AutomaticController(Node):
     def point_callback(self, point: Point):
         msg = Twist()
         vel_delta = self.velocity['x'] - self.velocity_destined
-        msg.linear.x = 0.0 + self.velocity_destined - vel_delta
+        msg.linear.x = 0.0 + self.velocity_destined
         msg.linear.y = 0.0
         msg.linear.z = 0.0
         dist = point.y
