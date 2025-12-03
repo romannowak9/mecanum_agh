@@ -28,6 +28,7 @@ setup(
             'control = simple_example.control:main',
             'camera = simple_example.camera:main',
             'LaserScanController = simple_example.LaserScanController:main',
+            'Logger = simple_example.Logger:main'
         ],
     },
 )
