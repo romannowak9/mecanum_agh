@@ -3,18 +3,9 @@ import rclpy
 from rclpy.node import Node
 import math
 from geometry_msgs.msg import Point, Twist
+from sensor_msgs.msg import Imu
 from rclpy.qos import QoSProfile, QoSReliabilityPolicy, QoSHistoryPolicy
 from std_msgs.msg import String
-
-def stanley_control(control_angle, track_error, vehicle_velocity, vehicle_gain, margin=0.05):
-    crosstrack = math.atan2(vehicle_gain * track_error) / (vehicle_velocity + margin)
-    steer_angle = control_angle + crosstrack
-    return steer_angle 
-
-def pure_pursuit(vehicle_length, error_angle, forward_velocity, gain=1):
-    heading_angle = math.atan((2.0 * vehicle_length * math.sin(error_angle)) / (gain * forward_velocity))
-    return heading_angle
-
 
 class PID:
     def __init__(self, kp, ki, kd):
@@ -33,7 +24,6 @@ class PID:
         self.prev_error = err
 
         return p + i + d
-
 
 class AutomaticController(Node):
     def __init__(self):
@@ -59,6 +49,13 @@ class AutomaticController(Node):
             qos_profile=point_qos_profile
         )
 
+        self.imu_sub = self.create_subscription(
+            Imu,
+            "/imu",
+            self.imu_callback,
+            10
+        )
+
         self.const_velocity = (2.0, 0.0, 0.0)
         self.vehicle_length = 1.0
         self.surround_area = {'front': False, 'back': False, 'left': False, 'right': False}
@@ -67,27 +64,20 @@ class AutomaticController(Node):
 
         self.pid = PID(kp=2, ki=0.5, kd=0.02)
 
+        self.velocity = {'x': 0.0, 'y': 0.0, 'z': 0.0}
+        self.prev_time = self.get_clock().now().seconds_nanoseconds()[0]
+        self.velocity_destined = 2.0
+
     def point_callback(self, point: Point):
         msg = Twist()
-        msg.linear.x = self.const_velocity[0]
-        msg.linear.y = self.const_velocity[1]
-        msg.linear.z = self.const_velocity[2]
-
+        vel_delta = self.velocity['x'] - self.velocity_destined
+        msg.linear.x = 0.0 + self.velocity_destined
+        msg.linear.y = 0.0
+        msg.linear.z = 0.0
         dist = point.y
         e = -point.x
 
-        ## PURE PURSUIT
-        # err_angle = math.atan2(e, dist + self.vehicle_length)
-
-        # calc_angle = pure_pursuit(
-        #     vehicle_length=self.vehicle_length,
-        #     error_angle=err_angle,
-        #     forward_velocity=self.const_velocity[0]
-        # )
-
-        ## PID
-        calc_angle  = self.pid(e)
-
+        calc_angle = self.pid(e)
 
         msg.angular.x = 0.0
         msg.angular.y = 0.0
@@ -107,10 +97,26 @@ class AutomaticController(Node):
             elif self.surround_area.get('right', False) and not self.surround_area.get('left', False):
                 msg.angular.z = max(msg.angular.z, 0.2)
 
-
         self.emergency = any(self.surround_area.values())
         self.latest_auto_twist = msg
 
     def lidar_callback(self, msg: String):
         surround_area = json.loads(msg.data)
         self.surround_area = surround_area
+    
+    def imu_callback(self, msg: Imu):
+        current_time = self.get_clock().now().seconds_nanoseconds()[0] + self.get_clock().now().seconds_nanoseconds()[1] / 1e9
+        dt = (current_time - self.prev_time)
+        acc_x = msg.linear_acceleration.x
+        acc_y = msg.linear_acceleration.y
+        acc_z = msg.linear_acceleration.z
+
+        self.velocity['x'] += acc_x * dt
+        # self.velocity['y'] += acc_y * dt
+        # self.velocity['z'] += acc_z * dt
+
+        self.prev_time = current_time
+
+        # self.get_logger().info('x ' + str(self.velocity['x']))
+        # self.get_logger().info('y ' + str(self.velocity['y']))
+        # self.get_logger().info('z ' + str(self.velocity['z']))
