@@ -1,11 +1,8 @@
 import math
 import numpy as np 
-from shapely.geometry import Point, Polygon
-from shapely.geometry.polygon import LinearRing, LineString
 import matplotlib.pyplot as plt
 import matplotlib
-from scipy import interpolate
-
+import csv
 
 
 # matplotlib.use('TkAgg')
@@ -17,34 +14,25 @@ def linear_interpolate(p1, p2, num_points=10):
 
 
 def main():
-    # track_line = np.load('center_line.npy', allow_pickle=True)
-    waypoints = np.load('Trapezoid.npy', allow_pickle=True)
-    # track_line_x = waypoints[:, 0] * 12
-    # track_line_y = waypoints[:, 1] * 12
-
+    waypoints = np.load('center_line.npy', allow_pickle=True)
 
     track = waypoints[:, 0:2] * 12
 
     n_points = track.shape[1]
 
-    # track_line = LineString(track_line)
-
-    # fig = plt.figure(1, figsize=(16, 10))
-    # ax = fig.add_subplot(111, facecolor='black')
-    # plt.axis('equal')
-
-    # x, y = track_line.xy
-    # x, y = track_line_x, track_line_y
-    # x = x * 12 
-    # y = y * 12 
-
-
     pid_track_x = np.random.rand(n_points) * 60
     pid_track_y = np.random.rand(n_points) * 50
 
+
+    data = np.genfromtxt('data.csv', delimiter=',', skip_header=1)
+
+    time = data[:, 0]
+    X = data[:, 1]
+    Y = data[:, 2]
+
     sum_error = 0
 
-    for px, py in zip(pid_track_x, pid_track_y):
+    for px, py in zip(X, Y):
         curr_point = np.array([px, py])
         distances = np.linalg.norm(track - curr_point, axis=1)
         error = np.min(distances)
