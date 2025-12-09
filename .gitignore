@@ -4,3 +4,4 @@
 **/.vscode
 core*.*
 **/__pycache__/**
+**/scripts/*.png
