@@ -5,6 +5,7 @@ import cv2
 
 from sensor_msgs.msg import Image
 from geometry_msgs.msg import Point
+from std_msgs.msg import Bool
 from rclpy.qos import QoSProfile, QoSReliabilityPolicy, QoSHistoryPolicy
 
 
@@ -31,6 +32,12 @@ class CameraSubscriber(Node):
             reliability=QoSReliabilityPolicy.BEST_EFFORT,
             history=QoSHistoryPolicy.KEEP_LAST,
             depth=10
+        )
+        
+        self.see_setpoint_pub_ = self.create_publisher(
+            Bool,
+            '/see_setpoint',
+            10
         )
 
         self.img_sub_ = self.create_subscription(Image, "/camera", self.camera_cb, qos_profile=qos_profile)
@@ -150,6 +157,14 @@ class CameraSubscriber(Node):
             set_point_3d.y = float(Y)
             set_point_3d.z = float(Z)
             self.set_point_pub_.publish(set_point_3d)
+
+            see_setpoint_msg = Bool()
+            see_setpoint_msg.data = True
+            self.see_setpoint_pub_.publish(see_setpoint_msg)
+        else:
+            see_setpoint_msg = Bool()
+            see_setpoint_msg.data = False
+            self.see_setpoint_pub_.publish(see_setpoint_msg)
             
 
         cv2.imshow('camera', self.__curr_frame)
