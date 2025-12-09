@@ -61,8 +61,16 @@ def generate_launch_description():
                    '/camera_info@sensor_msgs/msg/CameraInfo@gz.msgs.CameraInfo',
                    '/model/vehicle_blue/cmd_vel@geometry_msgs/msg/Twist@gz.msgs.Twist',
                    '/imu@sensor_msgs/msg/Imu@gz.msgs.IMU',
-                   '/lidar/points@sensor_msgs/msg/PointCloud2@gz.msgs.PointCloudPacked',],
+                   '/lidar/points@sensor_msgs/msg/PointCloud2@gz.msgs.PointCloudPacked',
+                   '/model/vehicle_blue/odometry@nav_msgs/msg/Odometry@gz.msgs.Odometry'],
         output='screen'
+    )
+
+    Logger = Node(
+        package='simple_example',
+        namespace='simple_example',
+        executable='Logger',
+        name='Logger'
     )
 
     return LaunchDescription([
@@ -73,5 +81,6 @@ def generate_launch_description():
         rviz,
         camera,
         control,
-        LaserScanController
+        LaserScanController,
+        Logger
     ])
