@@ -3,6 +3,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib
 import csv
+import datetime
+
+# Dodaj wybieranie jednostki czasu
 
 
 # matplotlib.use('TkAgg')
@@ -24,11 +27,11 @@ def main():
     pid_track_y = np.random.rand(n_points) * 50
 
 
-    data = np.genfromtxt('data.csv', delimiter=',', skip_header=1)
+    data = np.genfromtxt('../../pos_logs/pos_log_20251209_134057.txt', delimiter=',', skip_header=1)
 
     time = data[:, 0]
-    X = data[:, 1]
-    Y = data[:, 2]
+    Y = -data[:, 1] + 30.0
+    X = data[:, 2] + 2.5
 
     sum_error = 0
 
@@ -38,16 +41,20 @@ def main():
         error = np.min(distances)
         sum_error += error
 
+    now = datetime.datetime.now()
+    timestamp_str = now.strftime("%Y%m%d_%H%M%S")
+    filename = f"pos_graph_{timestamp_str}.png"
+
     plt.figure(figsize=(6, 6))
-    plt.plot(track[:, 0], track[:, 1], marker='x', color='b', linestyle='-', label="LineString")
-    plt.plot(pid_track_x, pid_track_y, marker='o', color='r', linestyle='-', label="LineString")
-    plt.title("LineString from Shapely")
+    plt.plot(track[:, 0], track[:, 1], marker='x', color='b', linestyle='-', label="Racetrack")
+    plt.plot(X, Y, color='r', linewidth=1, linestyle='-',  label="Car Path")
+    plt.title(f"Error: {sum_error}")
     plt.xlabel("X")
     plt.ylabel("Y")
     plt.legend()
     plt.grid(True)
-    plt.axis('equal')  # To keep aspect ratio equal
-    plt.show()
+    plt.axis('equal')
+    plt.savefig(filename)
 
     print(f"Error: {sum_error}")
 
