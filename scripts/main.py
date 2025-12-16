@@ -41,9 +41,7 @@ def main():
         error = np.min(distances)
         sum_error += error
 
-    now = datetime.datetime.now()
-    timestamp_str = now.strftime("%Y%m%d_%H%M%S")
-    filename = f"pos_graph_{timestamp_str}.png"
+    filename = f"pos_graph.png"
 
     plt.figure(figsize=(6, 6))
     plt.plot(track[:, 0], track[:, 1], marker='x', color='b', linestyle='-', label="Racetrack")
