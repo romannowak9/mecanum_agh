@@ -56,17 +56,15 @@ class AutomaticController(Node):
             10
         )
 
-        self.const_velocity = (2.0, 0.0, 0.0)
         self.vehicle_length = 1.0
         self.surround_area = {'front': False, 'back': False, 'left': False, 'right': False}
-        self.emergency = False
         self.latest_auto_twist = Twist()
 
-        self.pid = PID(kp=2, ki=0.5, kd=0.02)
+        self.pid = PID(kp=3, ki=1.0, kd=0.05)
 
         self.velocity = {'x': 0.0, 'y': 0.0, 'z': 0.0}
         self.prev_time = self.get_clock().now().seconds_nanoseconds()[0]
-        self.velocity_destined = 2.0
+        self.velocity_destined = 6
 
     def point_callback(self, point: Point):
         msg = Twist()
@@ -79,25 +77,12 @@ class AutomaticController(Node):
 
         calc_angle = self.pid(e)
 
+        # calc_angle = pure_pursuit(self.vehicle_length, e, msg.linear.x, gain=0.1)
+
         msg.angular.x = 0.0
         msg.angular.y = 0.0
         msg.angular.z = float(calc_angle)
 
-        if self.surround_area.get('front', False):
-            msg.linear.x = 0.0
-            if self.surround_area.get('left', False) and not self.surround_area.get('right', False):
-                msg.angular.z = -abs(msg.angular.z) if msg.angular.z != 0.0 else -0.5
-            elif self.surround_area.get('right', False) and not self.surround_area.get('left', False):
-                msg.angular.z = abs(msg.angular.z) if msg.angular.z != 0.0 else 0.5
-            else:
-                msg.angular.z = msg.angular.z * 1.0
-        else:
-            if self.surround_area.get('left', False) and not self.surround_area.get('right', False):
-                msg.angular.z = min(msg.angular.z, -0.2)
-            elif self.surround_area.get('right', False) and not self.surround_area.get('left', False):
-                msg.angular.z = max(msg.angular.z, 0.2)
-
-        self.emergency = any(self.surround_area.values())
         self.latest_auto_twist = msg
 
     def lidar_callback(self, msg: String):
@@ -111,7 +96,7 @@ class AutomaticController(Node):
         acc_y = msg.linear_acceleration.y
         acc_z = msg.linear_acceleration.z
 
-        self.velocity['x'] += acc_x * dt
+        # self.velocity['x'] += acc_x * dt
         # self.velocity['y'] += acc_y * dt
         # self.velocity['z'] += acc_z * dt
 
@@ -120,3 +105,11 @@ class AutomaticController(Node):
         # self.get_logger().info('x ' + str(self.velocity['x']))
         # self.get_logger().info('y ' + str(self.velocity['y']))
         # self.get_logger().info('z ' + str(self.velocity['z']))
+
+# vehcile_length = L
+# error_angle = alpha
+# distance_from_point = ld
+# forward_velcity = vf
+def pure_pursuit(vehicle_length, error_angle, forward_velocity, gain=1):
+    heading_angle = math.atan((2.0 * vehicle_length * math.sin(error_angle)) / (gain * forward_velocity))
+    return heading_angle
