@@ -27,34 +27,53 @@ def main():
     pid_track_y = np.random.rand(n_points) * 50
 
 
-    data = np.genfromtxt('../../pos_logs/pos_log_20251209_134057.txt', delimiter=',', skip_header=1)
+    filenames = ['pid', 'pure_pursuit']
 
-    time = data[:, 0]
-    Y = -data[:, 1] + 30.0
-    X = data[:, 2] + 2.5
+    for filename in filenames:
+        print(filename)
+        data = np.genfromtxt(f'../../pos_logs/{filename}.txt', delimiter=',', skip_header=1)
 
-    sum_error = 0
+        time = data[:, 0]
+        Y = -data[:, 1] + 30.0
+        X = data[:, 2] + 2.5
 
-    for px, py in zip(X, Y):
-        curr_point = np.array([px, py])
-        distances = np.linalg.norm(track - curr_point, axis=1)
-        error = np.min(distances)
-        sum_error += error
 
-    filename = f"pos_graph.png"
+        n_points = min(len(time), 10_000)
 
-    plt.figure(figsize=(6, 6))
-    plt.plot(track[:, 0], track[:, 1], marker='x', color='b', linestyle='-', label="Racetrack")
-    plt.plot(X, Y, color='r', linewidth=1, linestyle='-',  label="Car Path")
-    plt.title(f"Error: {sum_error}")
-    plt.xlabel("X")
-    plt.ylabel("Y")
-    plt.legend()
-    plt.grid(True)
-    plt.axis('equal')
-    plt.savefig(filename)
+        X = X[:n_points]
+        Y = Y[:n_points]
 
-    print(f"Error: {sum_error}")
+        sum_error = 0
+
+        for px, py in zip(X, Y):
+            curr_point = np.array([px, py])
+            distances = np.linalg.norm(track - curr_point, axis=1)
+            error = np.min(distances)
+            sum_error += error
+        
+        prev_points = track[:-1]
+        next_points = track[1:]
+        whole_distance = np.linalg.norm(next_points - prev_points)
+
+        relative_err = sum_error / whole_distance
+
+        now = datetime.datetime.now()
+        timestamp_str = now.strftime("%Y%m%d_%H%M%S")
+        #filename = f"pos_graph_{timestamp_str}.png"
+
+        plt.figure(figsize=(6, 6))
+        plt.plot(track[:, 0], track[:, 1], marker='x', color='b', linestyle='-', label="Racetrack")
+        plt.plot(X, Y, color='r', linewidth=1, linestyle='-',  label="Car Path")
+        plt.title(f"Err: {sum_error}, rel_err:{relative_err}")
+        plt.xlabel("X")
+        plt.ylabel("Y")
+        plt.legend()
+        plt.grid(True)
+        plt.axis('equal')
+        plt.savefig(f"plot_err_{filename}.png")
+
+        print(f"Error: {sum_error}")
+        print(f"Relative error: {relative_err}")
 
 
 if __name__ == '__main__':
