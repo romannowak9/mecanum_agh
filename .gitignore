@@ -4,5 +4,5 @@
 **/.vscode
 core*.*
 **/__pycache__/**
-Livox-SDK2/**
-livox_ros_driver2/**
+Livox-SDK2
+livox_ros_driver2
