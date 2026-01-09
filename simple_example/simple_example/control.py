@@ -5,7 +5,9 @@ from rclpy.qos import QoSProfile, QoSHistoryPolicy
 import pygame
 import sys
 
+# Imports from your package
 from .automatic_control import AutomaticController
+from .arduino_driver import MotorDriver
 
 class MasterController(Node):
     def __init__(self, auto_node_ref):
@@ -109,10 +111,12 @@ def main(args=None):
 
     auto_node = AutomaticController()
     master_node = MasterController(auto_node_ref=auto_node)
+    motor_node = MotorDriver()
 
     executor = rclpy.executors.SingleThreadedExecutor()
     executor.add_node(auto_node)
     executor.add_node(master_node)
+    executor.add_node(motor_node)
 
     try:
         executor.spin()
@@ -122,8 +126,10 @@ def main(args=None):
         print(f"An error occurred: {e}")
     finally:
         master_node.cleanup()
+        motor_node.cleanup()
         master_node.destroy_node()
         auto_node.destroy_node()
+        motor_node.destroy_node()
         rclpy.shutdown()
 
 if __name__ == '__main__':

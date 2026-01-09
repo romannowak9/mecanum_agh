@@ -1,128 +1,97 @@
+import rclpy
+from rclpy.node import Node
+from geometry_msgs.msg import Twist
 import serial
 import time
-import struct
 
-# --- CONFIGURATION ---
-SERIAL_PORT = '/dev/ttyACM0'  # Change to 'COM3' on Windows
+SERIAL_PORT = '/dev/ttyACM0'
 BAUD_RATE = 9600
+PWM_SCALE = 200.0
+ROTATION_SCALE = 1.0
 
-# Calibration (Multipliers to adjust drift)
-CALIB_L = 1.0 
-CALIB_R = 1.0
+class MotorDriver(Node):
+    def __init__(self):
+        super().__init__('motor_driver')
+        self.serial_connected = False
+        self.arduino = None
+        self.last_cmd_time = self.get_clock().now()
+        
+        try:
+            self.arduino = serial.Serial(SERIAL_PORT, BAUD_RATE, timeout=0.1)
+            time.sleep(2)
+            self.serial_connected = True
+            self.get_logger().info(f"Connected to Arduino on {SERIAL_PORT}")
+        except Exception as e:
+            self.get_logger().warn(f"Serial connection failed: {e}. Running in headless mode.")
+            self.serial_connected = False
 
-def send_message(arduino, command, velocity, distance=0, mode=250):
-    """
-    Sends data matching the Arduino 'dataBuffer' logic.
-    
-    :param arduino: Serial object
-    :param command: 'go', 'back', 'left', 'right', 'stop'
-    :param velocity: 0-255
-    :param distance: 0-255 (Arduino multiplies this by 10 for encoder limit)
-    :param mode: 
-        250 = Advanced Control (Stop after distance)
-        240 = Continuous Run (Ignore distance)
-        255 = Emergency Stop
-    """
-    
-    # Calculate calibrated speeds
-    speed_l = int(velocity * CALIB_L)
-    speed_r = int(velocity * CALIB_R)
-    
-    # Constrain to byte size (0-255)
-    speed_l = max(0, min(255, speed_l))
-    speed_r = max(0, min(255, speed_r))
-    
-    # Default speeds for 4 motors (TL, TR, BL, BR)
-    sTL, sTR, sBL, sBR = speed_l, speed_r, speed_l, speed_r
-    
-    # Default directions (TL, TR, BL, BR)
-    dTL, dTR, dBL, dBR = 0, 0, 0, 0
+        self.subscription = self.create_subscription(
+            Twist,
+            '/model/vehicle_blue/cmd_vel',
+            self.cmd_vel_callback,
+            10
+        )
+        
+        self.timer = self.create_timer(0.1, self.watchdog)
 
-    # --- DIRECTION LOGIC (Matched to your previous views.py) ---
-    if command == 'go':
-        # Pattern: 1, 0, 1, 0
-        dTL, dTR, dBL, dBR = 1, 0, 1, 0
-    elif command == 'back':
-        # Pattern: 0, 1, 0, 1
-        dTL, dTR, dBL, dBR = 0, 1, 0, 1
-    elif command == 'left':
-        # Pattern: 0, 0, 0, 0
-        dTL, dTR, dBL, dBR = 0, 0, 0, 0
-    elif command == 'right':
-        # Pattern: 1, 1, 1, 1
-        dTL, dTR, dBL, dBR = 1, 1, 1, 1
-    elif command == 'left_rotate':
-         # Pattern from views.py cmd 5
-        dTL, dTR, dBL, dBR = 0, 0, 1, 1
-    elif command == 'right_rotate':
-        # Pattern from views.py cmd 6
-        dTL, dTR, dBL, dBR = 1, 1, 0, 0
-    elif command == 'stop':
-        mode = 255
+    def cmd_vel_callback(self, msg):
+        if not self.serial_connected:
+            return
+
+        self.last_cmd_time = self.get_clock().now()
+        
+        linear_x = msg.linear.x
+        angular_z = msg.angular.z
+        
+        left_motor_val = (linear_x - (angular_z * ROTATION_SCALE)) * PWM_SCALE
+        right_motor_val = (linear_x + (angular_z * ROTATION_SCALE)) * PWM_SCALE
+        
+        self.send_packet(left_motor_val, right_motor_val)
+
+    def send_packet(self, left_val, right_val):
+        if not self.serial_connected:
+            return
+
+        speed_l = int(abs(left_val))
+        speed_r = int(abs(right_val))
+        
+        speed_l = max(0, min(255, speed_l))
+        speed_r = max(0, min(255, speed_r))
+        
+        if left_val >= 0:
+            d_left = 1
+        else:
+            d_left = 0
+            
+        if right_val >= 0:
+            d_right = 0
+        else:
+            d_right = 1
+            
+        sTL, sBL = speed_l, speed_l
+        sTR, sBR = speed_r, speed_r
+        
+        dTL, dBL = d_left, d_left
+        dTR, dBR = d_right, d_right
+        
+        mode = 240
         distance = 0
+        
+        packet = [mode, distance, sTL, sTR, sBL, sBR, dTL, dTR, dBL, dBR]
+        
+        try:
+            self.arduino.write(bytes(packet))
+        except Exception:
+            pass
 
-    # --- PACKET CONSTRUCTION ---
-    packet = []
+    def watchdog(self):
+        if not self.serial_connected:
+            return
+
+        time_diff = (self.get_clock().now() - self.last_cmd_time).nanoseconds / 1e9
+        if time_diff > 0.5:
+            self.send_packet(0, 0)
     
-    if mode == 255:
-        # Arduino: if 255, expectedDataSize = 1
-        packet = [255, 0] 
-    else:
-        # Arduino: if 240/250, expectedDataSize = 9
-        # Structure: [Header, Dist, S_TL, S_TR, S_BL, S_BR, D_TL, D_TR, D_BL, D_BR]
-        packet = [
-            mode,       # Header
-            distance,   # dataBuffer[0]
-            sTL,        # dataBuffer[1]
-            sTR,        # dataBuffer[2]
-            sBL,        # dataBuffer[3]
-            sBR,        # dataBuffer[4]
-            dTL,        # dataBuffer[5]
-            dTR,        # dataBuffer[6]
-            dBL,        # dataBuffer[7]
-            dBR         # dataBuffer[8]
-        ]
-
-    # --- SENDING ---
-    try:
-        print(f"Sending: {packet}")
-        arduino.write(bytes(packet))
-        
-        # If using Advanced Control (250), Arduino sends back "true" when done
-        if mode == 250:
-            print("Waiting for movement to finish...")
-            while True:
-                if arduino.in_waiting > 0:
-                    response = arduino.readline().decode('utf-8').strip()
-                    print(f"Arduino: {response}")
-                    if response == "true":
-                        break
-    except Exception as e:
-        print(f"Transmission Error: {e}")
-
-# --- MAIN EXECUTION ---
-if __name__ == "__main__":
-    try:
-        arduino = serial.Serial(port=SERIAL_PORT, baudrate=BAUD_RATE, timeout=1)
-        time.sleep(2) # Allow Arduino to reset
-        print("Connected.")
-
-        # --- EXAMPLE 1: Move Forward for a specific distance (Mode 250) ---
-        # Distance 20 sends "20" to Arduino, which calculates "200" ticks
-        #send_message(arduino, command='go', velocity=150, distance=20, mode=250)
-        
-        time.sleep(1)
-
-        # --- EXAMPLE 2: Move Backwards continuously (Mode 240) ---
-        send_message(arduino, command='back', velocity=120, distance=0, mode=240)
-        
-        time.sleep(2) # Let it run for 2 seconds
-
-        # --- EXAMPLE 3: Stop ---
-        send_message(arduino, command='stop', velocity=0, mode=255)
-
-        arduino.close()
-        print("Done.")
-
-    except serial.SerialException:
-        print(f"Could not open {SERIAL_PORT}")
+    def cleanup(self):
+        if self.arduino and self.arduino.is_open:
+            self.arduino.close()
