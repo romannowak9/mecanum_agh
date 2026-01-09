@@ -112,7 +112,7 @@ def generate_launch_description():
                    '/model/vehicle_blue/cmd_vel@geometry_msgs/msg/Twist@gz.msgs.Twist',
                    '/imu@sensor_msgs/msg/Imu@gz.msgs.IMU',
                    '/lidar/points@sensor_msgs/msg/PointCloud2@gz.msgs.PointCloudPacked',
-                   '/lidar@sensor_msgs/msg/LaserScan@gz.msgs.LaserScan'],
+                   '/lidar@sensor_msgs/msg/LaserScan@gz.msgs.LaserScan',
                    '/model/vehicle_blue/odometry@nav_msgs/msg/Odometry@gz.msgs.Odometry'],
         output='screen'
     )
