@@ -60,6 +60,13 @@ def generate_launch_description():
         name='obstacles_control'
     )
 
+    arduino_commands = Node(
+        package='simple_example',
+        namespace='simple_example',
+        executable='arduino_commands',
+        name='arduino_commands'
+    )
+
     ################### user configure parameters for ros2 start ###################
     xfer_format   = 0    # 0-Pointcloud2(PointXYZRTL), 1-customized pointcloud format
     multi_topic   = 0    # 0-All LiDARs share the same topic, 1-One LiDAR one topic
@@ -138,5 +145,6 @@ def generate_launch_description():
         control,
         obstacles_control,
         # LaserScanController,
+        arduino_commands,
         Logger
     ])

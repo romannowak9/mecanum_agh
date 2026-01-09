@@ -101,10 +101,10 @@ class ArduinoMsgsNode(Node):
         ])
 
         self.arduino.write(frame)
-
-        self.get_logger().debug(
-            f"vx={vx:.2f}, vy={vy:.2f}, ω={omega:.2f} | "
-            f"PWM: LF={lf_pwm}, RF={rf_pwm}, LB={lb_pwm}, RB={rb_pwm}"
+        
+        self.get_logger().info(
+            f"vx={vx:.2f}, vy={vy:.2f}, omega={omega:.2f} -> "
+            f"PWM: LF={'' if lf_dir else '-'}{lf_pwm}, RF={'' if rf_dir else '-'}{rf_pwm}, LB={'' if lb_dir else '-'}{lb_pwm}, RB={'' if rb_dir else '-'}{rb_pwm}"
         )
 
 
