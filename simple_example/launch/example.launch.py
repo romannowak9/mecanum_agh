@@ -53,6 +53,12 @@ def generate_launch_description():
         name='LaserScanController'
     )
 
+    obstacles_control = Node(
+        package='simple_example',
+        namespace='simple_example',
+        executable='obstacles_control',
+        name='obstacles_control'
+    )
 
     ################### user configure parameters for ros2 start ###################
     xfer_format   = 0    # 0-Pointcloud2(PointXYZRTL), 1-customized pointcloud format
@@ -106,6 +112,7 @@ def generate_launch_description():
                    '/model/vehicle_blue/cmd_vel@geometry_msgs/msg/Twist@gz.msgs.Twist',
                    '/imu@sensor_msgs/msg/Imu@gz.msgs.IMU',
                    '/lidar/points@sensor_msgs/msg/PointCloud2@gz.msgs.PointCloudPacked',
+                   '/lidar@sensor_msgs/msg/LaserScan@gz.msgs.LaserScan'],
                    '/model/vehicle_blue/odometry@nav_msgs/msg/Odometry@gz.msgs.Odometry'],
         output='screen'
     )
@@ -129,6 +136,7 @@ def generate_launch_description():
 
         camera,
         control,
-        LaserScanController,
+        obstacles_control,
+        # LaserScanController,
         Logger
     ])

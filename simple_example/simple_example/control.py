@@ -1,6 +1,7 @@
 import rclpy
 from rclpy.node import Node
 from geometry_msgs.msg import Twist
+from std_msgs.msg import Bool
 from rclpy.qos import QoSProfile, QoSHistoryPolicy
 import pygame
 import sys
@@ -16,6 +17,20 @@ class MasterController(Node):
         cmd_qos_profile = QoSProfile(history=QoSHistoryPolicy.KEEP_LAST, depth=10)
         self.publisher_ = self.create_publisher(Twist, '/model/vehicle_blue/cmd_vel', qos_profile=cmd_qos_profile)
 
+        self.avoid_flag_sub_ = self.create_subscription(
+            Bool,
+            '/avoiding_obstacle',  
+            self.avoid_flag_cb,
+            10
+        )
+
+        self.avoid_vel_sub_ = self.create_subscription(
+            Twist,
+            '/avoiding_twist',  
+            self.avoid_vel_cb,
+            10
+        )
+
         self.manual_linear_speed = 6.0
         self.manual_angular_speed = 3.0
         self.manual_twist = Twist()
@@ -23,6 +38,9 @@ class MasterController(Node):
         self.joystick_connected = False
         self.mode = 'AUTO'
         self.button_previous_state = False 
+
+        self.avoiding_obstacle = False
+        self.avoiding_twist = Twist()
 
         pygame.init()
         if pygame.joystick.get_count() > 0:
@@ -39,6 +57,12 @@ class MasterController(Node):
         self.print_instructions()
         
         self.timer = self.create_timer(0.05, self.control_loop)
+    
+    def avoid_flag_cb(self, msg: Bool):
+        self.avoiding_obstacle = msg.data
+
+    def avoid_vel_cb(self, msg: Twist):
+        self.avoiding_twist = msg
 
     def print_instructions(self):
         print("\n=== Master Control Node ===")
@@ -70,7 +94,11 @@ class MasterController(Node):
             self.button_previous_state = mode_button
 
         if self.mode == 'AUTO':
-            cmd = self.auto_node.latest_auto_twist
+            if not self.avoiding_obstacle:
+                cmd = self.auto_node.latest_auto_twist
+            else:
+                cmd = self.avoiding_twist
+
             self.publisher_.publish(cmd)
             
         elif self.mode == 'MANUAL' and self.joystick_connected:
