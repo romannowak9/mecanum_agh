@@ -8,7 +8,7 @@ import sys
 
 # Imports from your package
 from .automatic_control import AutomaticController
-from .arduino_driver import MotorDriver
+from .arduino_driver import ArduinoDriver
 
 class MasterController(Node):
     def __init__(self, auto_node_ref):
@@ -139,7 +139,7 @@ def main(args=None):
 
     auto_node = AutomaticController()
     master_node = MasterController(auto_node_ref=auto_node)
-    motor_node = MotorDriver()
+    motor_node = ArduinoDriver()
 
     executor = rclpy.executors.SingleThreadedExecutor()
     executor.add_node(auto_node)

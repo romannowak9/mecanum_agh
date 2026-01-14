@@ -29,7 +29,8 @@ setup(
             'camera = simple_example.camera:main',
             'LaserScanController = simple_example.LaserScanController:main',
             'obstacles_control = simple_example.obstacles_control:main',
-            'Logger = simple_example.Logger:main'
+            'Logger = simple_example.Logger:main',
+            'ArduinoDriver = simple_example.arduino_driver:main'
         ],
     },
 )

@@ -94,20 +94,6 @@ def generate_launch_description():
             arguments=['--display-config', rviz_config_path]
         )
 
-    # Bridge
-    bridge = Node(
-        package='ros_gz_bridge',
-        executable='parameter_bridge',
-        arguments=['/camera@sensor_msgs/msg/Image@gz.msgs.Image',
-                   '/camera_info@sensor_msgs/msg/CameraInfo@gz.msgs.CameraInfo',
-                   '/model/vehicle_blue/cmd_vel@geometry_msgs/msg/Twist@gz.msgs.Twist',
-                   '/imu@sensor_msgs/msg/Imu@gz.msgs.IMU',
-                   '/lidar/points@sensor_msgs/msg/PointCloud2@gz.msgs.PointCloudPacked',
-                   '/lidar@sensor_msgs/msg/LaserScan@gz.msgs.LaserScan',
-                   '/model/vehicle_blue/odometry@nav_msgs/msg/Odometry@gz.msgs.Odometry'],
-        output='screen'
-    )
-
     Logger = Node(
         package='simple_example',
         namespace='simple_example',
@@ -118,8 +104,6 @@ def generate_launch_description():
     return LaunchDescription([
         DeclareLaunchArgument('rviz', default_value='true',
                               description='Open RViz.'),
-        gz_sim,
-        bridge,
         # rviz,
 
         livox_driver,
