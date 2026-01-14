@@ -17,6 +17,7 @@ services:
       - /dev:/dev
       - /dev/input/js*:/dev/input/js*
       - /dev/input/event*:/dev/input/event*
+      - /dev/tty*:/dev/tty*
     group_add:
       - 107
     user: developer

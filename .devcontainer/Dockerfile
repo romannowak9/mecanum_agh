@@ -1,4 +1,4 @@
-FROM osrf/ros:humble-desktop
+FROM arm64v8/ros:humble
 
 SHELL ["/bin/bash", "-c"]
 
@@ -20,6 +20,9 @@ RUN apt update && \
         python3-vcstool \
         python3-colcon-clean \
         wget \
+        joystick \
+        libsdl2-dev \
+        libpcl-all \
         clang-format && \
     python3 -m pip install -U \
         argcomplete \
@@ -48,7 +51,7 @@ RUN pip3 install \
 RUN curl https://packages.osrfoundation.org/gazebo.gpg --output /usr/share/keyrings/pkgs-osrf-archive-keyring.gpg
 RUN echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/pkgs-osrf-archive-keyring.gpg] http://packages.osrfoundation.org/gazebo/ubuntu-stable $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/gazebo-stable.list > /dev/null
 RUN apt-get update -y
-RUN apt-get install -y ros-humble-ros-gzharmonic
+# RUN apt-get install -y ros-humble-ros-gzharmonic
 RUN apt install -y ros-humble-turtle-tf2-py ros-humble-tf2-tools
 
 RUN apt-get update -y

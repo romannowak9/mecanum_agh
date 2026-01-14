@@ -13,16 +13,7 @@ from launch_ros.actions import Node
 
 
 def generate_launch_description():
-
-    pkg_ros_gz_sim_demos = get_package_share_directory('ros_gz_sim_demos')
-    pkg_ros_gz_sim = get_package_share_directory('ros_gz_sim')
     rviz_file = '/home/developer/ros2_ws/src/simple_example/xd.rviz'
-
-    gz_sim = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(
-            os.path.join(pkg_ros_gz_sim, 'launch', 'gz_sim.launch.py')),
-        launch_arguments={'gz_args': '-r robot_with_track.sdf'}.items(),
-    )
 
     # RViz
     rviz = Node(
