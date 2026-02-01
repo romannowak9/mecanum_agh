@@ -1,6 +1,6 @@
-# ROS 2 + Gazebo Harmonic docker
+# Projekt z przedmiotu Systemy i Algorytmy Percepcji w Pojazdach Autonomicznych
 
-Repozytorium zawiera kod do wykorzystania przez studentów w celu realizacji zajęć z Systemów i Algorytmów Percepcji w Pojazdach Autonomicznych (SiAPwPA) w semestrze zimowym 2024/2025.
+Repozytorium zawiera kod studentów realizujący projekt w ramach przedmiotu Systemy i Algorytmy Percepcji w Pojazdach Autonomicznych w roku akademickim 2025/2026.
 
 ## Wymagania
 
@@ -13,49 +13,10 @@ Repozytorium zawiera kod do wykorzystania przez studentów w celu realizacji zaj
 
 ## Start
 
+### Symulator
+
 Otwórz VS Code w katalogu z projektem.
 Przejdź do lewego dolnego rogu i kliknij niebieską ikonę z dwiema strzałkami skierowanymi do siebie. Z rozwijanego menu wybierz **"Open Folder in Container... ”** i poczekaj, aż docker się zbuduje. Może to potrwać do 10 minut przy wolniejszym połączeniu internetowym.
-
-> [!TIP]
-> Dla osób korzystających z Windowsa oraz WSL 2 przygotowano `Dockerfile.windows` oraz `compose.windows.yaml`. 
-
-Po zalogowaniu się do dockera będzie on działał w sposób podobny do uruchamiania ROS na komputerze hosta. Wszystkie aplikacje GUI będą korzystać z domyślnego menedżera okien hosta, będziesz mieć również dostęp do wszystkich urządzeń na hoście, a także akceleracji GPU.
-Docker ma preinstalowany [ROS 2 Humble](https://docs.ros.org/en/humble/Tutorials.html) i większość potrzebnych zależności oraz symulator [Gazebo Harmonic](https://gazebosim.org/docs/harmonic/getstarted/).
-
-## Pierwsze uruchomienie
-
-Dla osób, które nie miały doczynienia ze środowiskiem ROS 2 + Gazebo, zachęcam do przerobienia tutorialu: [Gazebo Tutorial](https://gazebosim.org/docs/harmonic/tutorials/). Pozwoli to zaznajomić się z tym środowiskiem i tworzyć w przyszłości zaawansowane symulacje.
-
-Następnie pomocne będzie odpowiednia kontrola robotami w środowisku symulacyjnym, na dobry start proszę zaznajomić się z repozytorium: [Gazebo ROS 2 Control](https://github.com/ros-controls/gz_ros2_control/).
-
-Na sam koniec pewnym podsumowaniem, a także praktycznym podejściem do tematu jest dostarczony od [Husariona](https://husarion.com/tutorials/ros2-tutorials/1-ros2-introduction/) tutorial dla ich kilku robotów.
-
-> [!IMPORTANT] 
-Należy pamiętać, aby po zbudowaniu wywołać komendę lub pracować w nowym terminalu:
->
-> ```bash
-> source ~/.bashrc
-> ```
->
-> W tym pliku dodane są już dwie ważne ścieżki:
->
-> ```bash
-> /opt/ros/$ROS_DISTRO/setup.bash
-> /home/developer/ros2_ws/install/setup.bash
-> ```
-
-## Przykład
-1. Zbuduj obszar roboczy wraz z simple_example package.  
-2. Uruchom launcha `example.launch.py`, pokazujący, w jaki sposób należy połączyć Gazebo z ROS 2, aby możliwa była wzajemna komunikacja.
-
-
-## Dodatkowe materiały
-* [Getting Started](docs/getting_started.md)
-* [ROS 2 Command Cheat Sheet](docs/cheatsheet.md)
-* [ROS 2 Example packages in Python](docs/example.md)
-* [Bridge communication between ROS and Gazebo](docs/ros_gz_bridge.md)
-
-## Dodatkowe informacje
 W celu uruchomienia projektu bez wpisywania wielu komend, należy uruchomić następujące polecenia:
 ```bash
 cd .. # Zmiania folderu do ~/ros2_ws
@@ -63,10 +24,29 @@ cd .. # Zmiania folderu do ~/ros2_ws
 ```
 W tym momencie skrypt upewnia się, że wszystkie ścieżki znajdują się w PATH, czy projekt jest zbudowany i uruchamia wszystkie widoki.
 
+### Uruchomienie na robocie
 
-# Opis projektu
+W celu uruchomienia projektu na robocie Mecanum poleca się użyć Nvidia Jetson Xavier NX o numerze "1", gdyż w folderze użytkownika znajduje się tam gotowy kod z zbudowanym Dockerem. Niestety nie przeniesiono wszystkich zmian, które wprowadzono w celu uruchomienia robota na repozytorium. Na repozytorium znajduje się zmodyfikowany obraz kontenera, który działa na procesorze o architekturze ARM. Zmiany w kodzie do działania na robocie można sprawdzić [w tym repozytorium](https://github.com/romannowak9/mecanum_agh/tree/arduino_input).
 
-## Opis zadanisa - cele
+Przed uruchomieniem obrazu zaleca się podpięcie do komputera Jetson pada do gier, a także wprowadzenie następująch poleceń w terminalu tego komuptera
+```bash
+sudo chmod 666 /dev/input/event*
+sudo chmod 666 /dev/input/js*
+```
+Jest to obejście problemu, przez który Docker nie wykrywał poprawnie pada. Uruchomienie środowiska na robocie wygląda podobnie do przypadku, w którym stosujemy symulator, jednak najpierw korzystając z VS Code, należy podpiąć się do komputera Jetson przy pomocy SSH i wejść do folderu użytkownika. W nim czeka nas folder *mecanum_agh*, w którym wykonujemy resztę kroków.
+
+W momencie uruchomienia programu robot znajduje się w trybie sterowania autonomicznego, to jest będzie poszukiwał pasów na ziemii.
+
+#### Sterowanie przy pomocy pada
+
+* Przycisk **B** (na padzie od XBoxa) - zmiana trybu sterowania. Wciskanie tego przycisku na przemian uruchamia tryb autonomiczny i manualny,
+* Przycisk **X** (na padzie od XBoxa) - "hamulec", przytrzymanie tego przycisku odcina sterowania napędem, przez co robot wyhamuje, działa tylko w ręcznym trybie sterownia,
+* Lewa gałka analogowa - sterowanie robotem, działa tylko w trybie ręcznego sterowania.
+
+
+## Opis projektu
+
+### Opis zadanisa - cele
 
 - Wdrożenie symulacji oraz dostosowanie jej parametrów w celu opracowania testowego modelu algorytmu sterowania pojazdem autonomicznym mecanum.
 - Implementacja algorytmu wizyjnego oraz sterującego prędkością i zwrotem pojazdu w symulacji.
@@ -74,7 +54,7 @@ W tym momencie skrypt upewnia się, że wszystkie ścieżki znajdują się w PAT
 - Przetestowanie rzeczywistego lidaru Livox.
 - Przeniesienie aplikacji na platformę mecanum wyposażoną w NVidia Jetson Xavier.
 
-## Wyznaczanie punktu zadanego na podstawie obrazu
+### Wyznaczanie punktu zadanego na podstawie obrazu
 
 - Z obrazu kamery wykrywany jest żółty pas na podstawie progowania koloru w przestrzeni HSV.
 - Spośród wykrytych konturów wybierany jest największy poprawny czworokąt, który nie dotyka krawędzi obrazu i ma wystarczające pole
@@ -82,7 +62,7 @@ W tym momencie skrypt upewnia się, że wszystkie ścieżki znajdują się w PAT
 - Z szerokości pasa w pikselach oraz znanej rzeczywistej szerokości pasa obliczana jest odległość Z od kamery
 - Punkt 2D jest rzutowany do przestrzeni 3D układu kamery z użyciem macierzy parametrów wewnętrznych kamery
 
-## MasterController - opis algorytmu sterowania pojazdem
+### MasterController - opis algorytmu sterowania pojazdem
 
 - Z gamepada określany jest tryb pracy pojazdu autonomicznego (MANUAL lub AUTO w przypadku braku pada).
 - W trybie MANUAL odczytywane są osie joysticka, a na ich podstawie wyznaczane są prędkości liniowe i kątowe pojazdu.
@@ -90,7 +70,7 @@ W tym momencie skrypt upewnia się, że wszystkie ścieżki znajdują się w PAT
 - W trybie AUTO publikowana jest prędkość wyznaczona przez moduł AutomaticController, chyba że aktywne jest unikanie przeszkód.
 - Jeśli aktywne jest unikanie przeszkód, zamiast prędkości automatycznej publikowana jest prędkość korekcyjna otrzymana z modułu unikania.
 
-## AutomaticController - opis algorytmu sterowania pojazdem
+### AutomaticController - opis algorytmu sterowania pojazdem
 
 - Z modułu kamery odbierany jest punkt zadany w układzie obrazu, który określa boczne odchylenie pojazdu względem środka pasa.
 - Błąd boczny jest przetwarzany przez regulator PID lub Purse Persuit, który wyznacza wartość skrętu pojazdu.
@@ -100,7 +80,7 @@ W tym momencie skrypt upewnia się, że wszystkie ścieżki znajdują się w PAT
 - Z danych IMU integrowane jest przyspieszenie w czasie, co pozwala oszacować aktualną prędkość pojazdu w osi X.
 - Wygenerowana komenda ruchu jest zapisywana jako najnowsza prędkość automatyczna i przekazywana do MasterController w trybie AUTO.
 
-## Procedura omijania przeszkody
+### Procedura omijania przeszkody
 
 - Z danych LaserScan wyznaczane są minimalne odległości do przeszkód
 - Jeśli minimalna odległość z przodu spadnie poniżej progu bezpieczeństwa, uznawane jest to za wykrycie przeszkody.
