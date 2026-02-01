@@ -26,7 +26,7 @@ W tym momencie skrypt upewnia się, że wszystkie ścieżki znajdują się w PAT
 
 ### Uruchomienie na robocie
 
-W celu uruchomienia projektu na robocie Mecanum poleca się użyć Nvidia Jetson Xavier NX o numerze "1", gdyż w folderze użytkownika znajduje się tam gotowy kod z zbudowanym Dockerem. Niestety nie przeniesiono wszystkich zmian, które wprowadzono w celu uruchomienia robota na repozytorium. Na repozytorium znajduje się zmodyfikowany obraz kontenera, który działa na procesorze o architekturze ARM. Zmiany w kodzie do działania na robocie można sprawdzić [w tym repozytorium](https://github.com/romannowak9/mecanum_agh/tree/arduino_input).
+W celu uruchomienia projektu na robocie Mecanum poleca się użyć Nvidia Jetson Xavier NX o numerze "1", gdyż w folderze użytkownika znajduje się tam gotowy kod z zbudowanym Dockerem. Niestety nie przeniesiono wszystkich zmian, które wprowadzono w celu uruchomienia robota na repozytorium. Na repozytorium znajduje się zmodyfikowany obraz kontenera, który działa na procesorze o architekturze ARM. Zmiany w kodzie do działania na robocie można sprawdzić [w tym branchu](https://github.com/romannowak9/mecanum_agh/tree/arduino_input).
 
 Przed uruchomieniem obrazu zaleca się podpięcie do komputera Jetson pada do gier, a także wprowadzenie następująch poleceń w terminalu tego komuptera
 ```bash
