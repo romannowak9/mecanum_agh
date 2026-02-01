@@ -62,3 +62,58 @@ cd .. # Zmiania folderu do ~/ros2_ws
 ./launch.sh
 ```
 W tym momencie skrypt upewnia się, że wszystkie ścieżki znajdują się w PATH, czy projekt jest zbudowany i uruchamia wszystkie widoki.
+
+
+# Opis projektu
+
+## Opis zadanisa - cele
+
+- Wdrożenie symulacji oraz dostosowanie jej parametrów w celu opracowania testowego modelu algorytmu sterowania pojazdem autonomicznym mecanum.
+- Implementacja algorytmu wizyjnego oraz sterującego prędkością i zwrotem pojazdu w symulacji.
+- Przetestowanie lidaru w symulacji oraz zaimplementowanie algorytmu omijania przeszkód.
+- Przetestowanie rzeczywistego lidaru Livox.
+- Przeniesienie aplikacji na platformę mecanum wyposażoną w NVidia Jetson Xavier.
+
+## Wyznaczanie punktu zadanego na podstawie obrazu
+
+- Z obrazu kamery wykrywany jest żółty pas na podstawie progowania koloru w przestrzeni HSV.
+- Spośród wykrytych konturów wybierany jest największy poprawny czworokąt, który nie dotyka krawędzi obrazu i ma wystarczające pole
+- Na podstawie wierzchołków czworokąta wyznaczane są środki lewego i prawego boku pasa. Punkt zadany w 2D to środek odcinka łączącego te dwa punkty (środek pasa w obrazie).
+- Z szerokości pasa w pikselach oraz znanej rzeczywistej szerokości pasa obliczana jest odległość Z od kamery
+- Punkt 2D jest rzutowany do przestrzeni 3D układu kamery z użyciem macierzy parametrów wewnętrznych kamery
+
+## MasterController - opis algorytmu sterowania pojazdem
+
+- Z gamepada określany jest tryb pracy pojazdu autonomicznego (MANUAL lub AUTO w przypadku braku pada).
+- W trybie MANUAL odczytywane są osie joysticka, a na ich podstawie wyznaczane są prędkości liniowe i kątowe pojazdu.
+- Wciśnięcie przycisku STOP zeruje prędkości i zatrzymuje pojazd.
+- W trybie AUTO publikowana jest prędkość wyznaczona przez moduł AutomaticController, chyba że aktywne jest unikanie przeszkód.
+- Jeśli aktywne jest unikanie przeszkód, zamiast prędkości automatycznej publikowana jest prędkość korekcyjna otrzymana z modułu unikania.
+
+## AutomaticController - opis algorytmu sterowania pojazdem
+
+- Z modułu kamery odbierany jest punkt zadany w układzie obrazu, który określa boczne odchylenie pojazdu względem środka pasa.
+- Błąd boczny jest przetwarzany przez regulator PID lub Purse Persuit, który wyznacza wartość skrętu pojazdu.
+- Z modułu LiDAR odbierana jest informacja o obecności przeszkód z przodu, z tyłu oraz po bokach pojazdu.
+- Jeśli przeszkoda znajduje się z przodu, pojazd zatrzymuje ruch do przodu i wykonuje skręt w stronę wolnej przestrzeni.
+- Jeśli przeszkoda znajduje się tylko z lewej lub tylko z prawej strony, regulator PID/PP jest korygowany tak, aby wymusić minimalny skręt w stronę wolnej - przestrzeni.
+- Z danych IMU integrowane jest przyspieszenie w czasie, co pozwala oszacować aktualną prędkość pojazdu w osi X.
+- Wygenerowana komenda ruchu jest zapisywana jako najnowsza prędkość automatyczna i przekazywana do MasterController w trybie AUTO.
+
+## Procedura omijania przeszkody
+
+- Z danych LaserScan wyznaczane są minimalne odległości do przeszkód
+- Jeśli minimalna odległość z przodu spadnie poniżej progu bezpieczeństwa, uznawane jest to za wykrycie przeszkody.
+- Po wykryciu przeszkody wybierana jest strona omijania (lewa lub prawa) – ta, po której przeszkoda jest bliżej.
+- Robot przechodzi w fazę skrętu w miejscu, aż przeszkoda znajdzie się z boku robota
+- Następnie aktywowany jest tryb podążania wzdłuż ściany:
+    - mierzona jest odległość do ściany po wybranej stronie,
+    - liczony jest błąd względem zadanej odległości,
+    - prędkość kątowa wyznaczana jest regulatorem P.
+- Gdy przeszkoda przestaje blokować tor jazdy i kamera ponownie widzi punkt zadany, omijanie zostaje zakończone.
+
+
+
+
+
+
